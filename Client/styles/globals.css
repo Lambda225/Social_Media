@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  @apply font-['satoshi','sans-serif'];
+}
+
+::-webkit-scrollbar {
+  @apply w-[7px];
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-400 rounded-lg;
+}
+.chat::-webkit-scrollbar-thumb {
+  @apply rounded-full;
+}
