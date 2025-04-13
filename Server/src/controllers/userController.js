@@ -79,29 +79,13 @@ export const follow = (req, res) => {
     });
 };
 
-//       const user = data;
-//       let followings = follower.followings.split(',');
-//       let followers = user.follower.split(',');
-//       followings.push(user.id);
-//       followers.push(follower.id);
-
-//       if (followers.includes(req.params.followerId)) {
-//         res.status(400).json('already following');
-//       }
-
-//       return User.update(
-//         { follower: followers.join() },
-//         { where: { id: req.params.id } }
-//       ).then((data) => {
-//          return User.update(
-//           { following: followings.join() },
-//           { where: { id: req.params.followerId } }
-//         ).then((data) => {
-//           res.status.json(data);
-//         });
-//       });
-//     });
-//   })
-//   .catch((err) => {
-//     res.status(500).json(err);
-//   });
+export const putUserImage = (req, res) => {
+  const picturePath = req.file.path;
+  User.update({ picturePath }, { where: { id: req.params.id } })
+    .then((data) => {
+      res.status(200).json({ msg: "User updated sucess" });
+    })
+    .catch((err) => {
+      res.status(500).json({ msg: "Server Erreur" });
+    });
+};

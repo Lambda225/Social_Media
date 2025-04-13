@@ -1,21 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import cookie from 'js-cookie';
-import { FaUser } from 'react-icons/fa';
-import { RiSendPlane2Fill } from 'react-icons/ri';
+import React, { useContext, useEffect, useState } from "react";
+import cookie from "js-cookie";
+import { FaUser } from "react-icons/fa";
+import { RiSendPlane2Fill } from "react-icons/ri";
 import {
   AiFillHeart,
   AiOutlineHeart,
   AiOutlineMessage,
   AiOutlineUserAdd,
   AiOutlineUserDelete,
-} from 'react-icons/ai';
-import { BsEmojiSmile } from 'react-icons/bs';
-import { format } from 'timeago.js';
-import axios from '@/pages/api/axios';
-import CommentCart from './CommentCart';
-import PopPost from './PopPost';
-import Picker from '@emoji-mart/react';
-import data from '@emoji-mart/data';
+} from "react-icons/ai";
+import { BsEmojiSmile } from "react-icons/bs";
+import { format } from "timeago.js";
+import axios from "@/pages/api/axios";
+import CommentCart from "./CommentCart";
+import PopPost from "./PopPost";
+import Picker from "@emoji-mart/react";
+import data from "@emoji-mart/data";
+import CurrentUserContext from "@/hook/currentUserProvider";
 
 export default function Post({
   post,
@@ -26,7 +27,8 @@ export default function Post({
   users,
 }) {
   const user = users.find((user) => user.id === post.UserId);
-  const [formValue, setFormValue] = useState({ content: '' });
+  const [formValue, setFormValue] = useState({ content: "" });
+  const currentUser = useContext(CurrentUserContext);
   const [popVisible, setPopVisible] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const [submit, setSubmit] = useState(false);
@@ -34,10 +36,10 @@ export default function Post({
   const [comments, setComments] = useState([]);
 
   const addEmoji = (e) => {
-    const sym = e.unified.split('_');
+    const sym = e.unified.split("_");
     const codeArray = [];
     sym.forEach((el) => {
-      codeArray.push('0x' + el);
+      codeArray.push("0x" + el);
       let emoji = String.fromCodePoint(...codeArray);
       setFormValue({ ...formValue, content: formValue.content + emoji });
     });
@@ -57,7 +59,7 @@ export default function Post({
   const valide = (value) => {
     let err = {};
     if (!value.content) {
-      err.content = 'Veillez remplir ce champ';
+      err.content = "Veillez remplir ce champ";
     }
     return err;
   };
@@ -65,17 +67,17 @@ export default function Post({
   const handleFollow = (e) => {
     axios
       .put(
-        `/user/${cookie.get('userId')}/${user.id}`,
+        `/user/${cookie.get("userId")}/${user.id}`,
         {},
         {
-          headers: { Authorization: cookie.get('token') },
+          headers: { Authorization: cookie.get("token") },
         }
       )
       .then((res) => {
         console.log(res.data);
         setUsers(
           users.map((item) => {
-            if (item.id == cookie.get('userId')) {
+            if (item.id == cookie.get("userId")) {
               return { ...item, following: res.data.following };
             } else if (item.id == user.id) {
               return { ...item, follower: res.data.follower };
@@ -85,7 +87,7 @@ export default function Post({
           })
         );
         setCurrentUser({
-          ...users.find((user) => user.id == cookie.get('userId')),
+          ...users.find((user) => user.id == cookie.get("userId")),
           following: res.data.following,
         });
       })
@@ -97,10 +99,10 @@ export default function Post({
   const handleLike = (e) => {
     axios
       .post(
-        `/like/${cookie.get('userId')}`,
+        `/like/${cookie.get("userId")}`,
         { postId: post.id },
         {
-          headers: { Authorization: cookie.get('token') },
+          headers: { Authorization: cookie.get("token") },
         }
       )
       .then((res) => {
@@ -121,8 +123,8 @@ export default function Post({
 
   useEffect(() => {
     axios
-      .get(`/comment/${cookie.get('userId')}/${post.id}`, {
-        headers: { Authorization: cookie.get('token') },
+      .get(`/comment/${cookie.get("userId")}/${post.id}`, {
+        headers: { Authorization: cookie.get("token") },
       })
       .then((res) => {
         setComments(res.data);
@@ -135,12 +137,12 @@ export default function Post({
   useEffect(() => {
     if (Object.keys(formErrors).length == 0 && submit) {
       axios
-        .post(`/comment/${cookie.get('userId')}/${post.id}`, formValue, {
-          headers: { Authorization: cookie.get('token') },
+        .post(`/comment/${cookie.get("userId")}/${post.id}`, formValue, {
+          headers: { Authorization: cookie.get("token") },
         })
         .then((res) => {
           setComments([...comments, res.data]);
-          setFormValue({ content: '' });
+          setFormValue({ content: "" });
         })
         .catch((err) => {
           console.log(err);
@@ -149,30 +151,33 @@ export default function Post({
   }, [formErrors]);
 
   return (
-    <div className=' bg-white dark:bg-slate-800 dark:text-white mt-10 p-10 rounded-lg'>
-      <div className=' flex items-center justify-between'>
-        <div className=' flex items-center gap-x-3'>
-          <div className='h-12 w-12 overflow-hidden rounded-full flex justify-center items-center dark:bg-slate-700 bg-slate-200'>
+    <div className=" bg-white dark:bg-slate-800 dark:text-white p-5 sm:p-10 rounded-lg">
+      <div className=" flex items-center justify-between">
+        <div className=" flex items-center gap-x-3">
+          <div className="h-12 w-12 overflow-hidden rounded-full flex justify-center items-center dark:bg-slate-700 bg-slate-200">
             {!user?.picturePath ? (
-              <FaUser className='text-xl text-slate-600 dark:text-slate-400' />
+              <FaUser className="text-xl text-slate-600 dark:text-slate-400" />
             ) : (
-              <img src={user.picturePath} alt='user' />
+              <img
+                src={`http://localhost:3001/${user.picturePath}`}
+                alt="user"
+              />
             )}
           </div>
-          <div className=''>
-            <h3 className=' font-bold text-sm capitalize'>
-              {user?.firstName} {user?.lastName?.split(' ')[0]}
+          <div className="">
+            <h3 className=" font-bold text-sm capitalize">
+              {user?.firstName} {user?.lastName?.split(" ")[0]}
             </h3>
-            <p className=' text-xs text-slate-400'>{format(post?.createdAt)}</p>
+            <p className=" text-xs text-slate-400">{format(post?.createdAt)}</p>
           </div>
         </div>
         <div
           onClick={handleFollow}
           className={` ${
-            user?.id == cookie.get('userId') ? 'hidden' : 'block'
+            user?.id == cookie.get("userId") ? "hidden" : "block"
           } text-lg cursor-pointer`}
         >
-          {user?.follower?.includes(cookie.get('userId')) ? (
+          {user?.follower?.includes(cookie.get("userId")) ? (
             <AiOutlineUserDelete />
           ) : (
             <AiOutlineUserAdd />
@@ -183,65 +188,65 @@ export default function Post({
       <p
         onClick={(e) => setPopVisible(true)}
         dangerouslySetInnerHTML={{
-          __html: post?.Description.replace(/(\r\n|\n|\r)/g, '<br />'),
+          __html: post?.Description.replace(/(\r\n|\n|\r)/g, "<br />"),
         }}
-        className=' cursor-pointer text-sm mt-4 font-medium'
+        className=" cursor-pointer text-sm mt-4 font-medium"
       ></p>
       {post.ImgPath && (
         <div
           onClick={(e) => setPopVisible(true)}
-          className=' cursor-pointer bg-slate-400 overflow-hidden mt-3 rounded-xl'
+          className=" cursor-pointer bg-slate-400 overflow-hidden mt-3 rounded-xl"
         >
-          {' '}
+          {" "}
           <img
-            className=' w-full h-auto'
+            className=" w-full h-auto"
             src={`http://localhost:3001/${post.ImgPath}`}
-            alt='post'
-          />{' '}
+            alt="post"
+          />{" "}
         </div>
       )}
-      <div className='my-3 flex gap-x-4'>
+      <div className="my-3 flex gap-x-4">
         <div>
-          {post?.Like?.includes(cookie.get('userId')) ? (
+          {post?.Like?.includes(cookie.get("userId")) ? (
             <span
               onClick={handleLike}
-              className='flex items-center gap-1 cursor-pointer'
+              className="flex items-center gap-1 cursor-pointer"
             >
-              <AiFillHeart className=' text-xl text-red-600' />
-              <span className='text-xs'>
+              <AiFillHeart className=" text-xl text-red-600" />
+              <span className="text-xs">
                 {!post?.Like?.join() ? 0 : post.Like.length}
               </span>
             </span>
           ) : (
             <span
-              className='flex items-center gap-1 cursor-pointer'
+              className="flex items-center gap-1 cursor-pointer"
               onClick={handleLike}
             >
-              <AiOutlineHeart className=' text-xl' />
-              <span className='text-xs'>
+              <AiOutlineHeart className=" text-xl" />
+              <span className="text-xs">
                 {!post?.Like?.join() ? 0 : post.Like.length}
               </span>
             </span>
           )}
         </div>
         <div
-          className='flex items-center gap-1 cursor-pointer'
+          className="flex items-center gap-1 cursor-pointer"
           onClick={(e) => setPopVisible(true)}
         >
-          <AiOutlineMessage className='text-xl' />
-          <span className='text-xs'>{comments.length}</span>
+          <AiOutlineMessage className="text-xl" />
+          <span className="text-xs">{comments.length}</span>
         </div>
       </div>
 
       {comments[0] && (
-        <div className=' mt-5 mb-7'>
+        <div className=" mt-5 mb-7">
           <h3
-            className=' mb-2 text-sm font-medium cursor-pointer underline underline-offset-2'
+            className=" mb-2 text-sm font-medium cursor-pointer underline underline-offset-2"
             onClick={(e) => setPopVisible(true)}
           >
             Voir plus de commentaires
           </h3>
-          <div className='flex flex-col gap-y-5 pl-10 mb-5'>
+          <div className="flex flex-col gap-y-5 pl-10 mb-5">
             {comments.slice(0, 2).map((comment) => {
               return <CommentCart key={comment.id} comment={comment} />;
             })}
@@ -251,37 +256,40 @@ export default function Post({
 
       <form
         onSubmit={handleSubmit}
-        className=' flex items-center w-full gap-x-4'
+        className=" flex items-center w-full gap-x-4"
       >
         <div>
-          <div className=' flex justify-center items-center h-10 w-10 rounded-full dark:bg-slate-700 bg-slate-200'>
-            {!user?.picturePath ? (
-              <FaUser className='text-sm text-slate-600 dark:text-slate-400' />
+          <div className=" flex overflow-hidden justify-center items-center h-10 w-10 rounded-full dark:bg-slate-700 bg-slate-200">
+            {!currentUser.user?.picturePath ? (
+              <FaUser className="text-sm text-slate-600 dark:text-slate-400" />
             ) : (
-              <img src={user.picturePath} alt='user' />
+              <img
+                src={`http://localhost:3001/${currentUser.user.picturePath}`}
+                alt="user"
+              />
             )}
           </div>
         </div>
-        <div className=' flex w-full items-center gap-4'>
-          <div className='relative w-full flex items-center gap-2'>
+        <div className=" flex w-full items-center gap-4">
+          <div className="relative w-full flex items-center gap-2">
             <textarea
-              name='content'
-              placeholder='Entrez un commentaire'
+              name="content"
+              placeholder="Entrez un commentaire"
               value={formValue.content}
               onChange={handleChange}
-              id=''
-              className=' bg-slate-100 dark:bg-slate-900 rounded-lg p-3 text-sm text-slate-600 focus:outline-blue-800 resize-none w-full'
-              rows='1'
+              id=""
+              className=" bg-slate-100 dark:bg-slate-900 rounded-lg p-3 text-sm text-slate-600 focus:outline-blue-800 resize-none w-full"
+              rows="1"
             ></textarea>
             <div
               onClick={(e) => setShowEmoji(!showEmoji)}
-              className=' text-xl text-slate-500 dark:text-slate-400 cursor-pointer'
+              className=" text-xl text-slate-500 dark:text-slate-400 cursor-pointer"
             >
               <BsEmojiSmile />
             </div>
             <div
               className={`${
-                showEmoji ? 'block' : 'hidden'
+                showEmoji ? "block" : "hidden"
               } absolute top-full right-0 z-20`}
             >
               <Picker
@@ -289,12 +297,13 @@ export default function Post({
                 emojiSize={20}
                 emojiButtonSize={30}
                 onEmojiSelect={addEmoji}
+                theme={currentUser.dark}
               />
             </div>
           </div>
 
           <button>
-            <RiSendPlane2Fill className=' text-2xl text-blue-800 -rotate-12 ' />
+            <RiSendPlane2Fill className=" text-2xl text-blue-800 -rotate-12 " />
           </button>
         </div>
       </form>

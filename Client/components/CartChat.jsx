@@ -3,9 +3,10 @@ import React, { useContext, useEffect, useState } from "react";
 import cookie from "js-cookie";
 import axios from "@/pages/api/axios";
 import ChatContext from "@/hook/chatProvider";
+import { FaUser } from "react-icons/fa";
 
 export default function CartChat({ chat }) {
-  const { setChatSelect, chatSelect } = useContext(ChatContext);
+  const { setChatSelect, chatSelect, activeUser } = useContext(ChatContext);
   const [user, setUser] = useState({});
   useEffect(() => {
     axios
@@ -30,12 +31,24 @@ export default function CartChat({ chat }) {
     >
       <div className=" flex items-center gap-3">
         <div
-          className={` ${
-            chatSelect.id == chat.id
-              ? "bg-slate-300"
-              : "bg-slate-400 dark:bg-slate-400"
-          } h-12 aspect-square  rounded-full`}
-        ></div>
+          className={`bg-slate-300 dark:bg-slate-400"
+          } h-12 aspect-square flex justify-center items-center relative  rounded-full`}
+        >
+          {user.picturePath ? (
+            <img
+              src={`http://localhost:3001/${user.picturePath}`}
+              alt=""
+              className=" rounded-full "
+            />
+          ) : (
+            <FaUser className="text-sm text-slate-600 dark:text-slate-600" />
+          )}{" "}
+          <div
+            className={`${
+              !activeUser.some((item) => item.userId == user.id) && "hidden"
+            } h-3 aspect-square rounded-full bg-green-400 absolute bottom-0 right-1`}
+          ></div>
+        </div>
         <div className=" text-xs">
           <h3
             className={`${

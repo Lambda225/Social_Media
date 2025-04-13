@@ -33,7 +33,7 @@ export const createChat = (req, res) => {
           );
         });
       } else {
-        return res.status(200).json("Existe déjà");
+        return res.status(200).json(data);
       }
     })
     .catch((err) => {

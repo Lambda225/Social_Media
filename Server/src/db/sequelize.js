@@ -6,8 +6,8 @@ import { chatModel } from "../models/chatModel.js";
 import { messageModel } from "../models/messageModel.js";
 
 const sequelize = new Sequelize("social_media", "root", "", {
-  dialect: "mysql",
-  dialectOptions: {
+  dialect: "mariadb",
+  difine: {
     charset: "utf8mb4",
   },
 });

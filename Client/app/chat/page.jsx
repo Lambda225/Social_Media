@@ -1,7 +1,7 @@
 "use client";
 import CartChat from "@/components/CartChat";
 import NavBar from "@/components/NavBar";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { FiSearch } from "react-icons/fi";
 import {
   BiSolidContact,
@@ -10,7 +10,7 @@ import {
 } from "react-icons/bi";
 import { MdOutlineAttachFile } from "react-icons/md";
 import { RiSendPlane2Fill } from "react-icons/ri";
-import { BsEmojiSmile } from "react-icons/bs";
+import { BsArrowLeft, BsEmojiSmile } from "react-icons/bs";
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import Message from "@/components/Message";
@@ -19,9 +19,10 @@ import cookie from "js-cookie";
 import ChatContext from "@/hook/chatProvider";
 import CurrentUserContext from "@/hook/currentUserProvider";
 import CartContact from "@/components/CartContact";
+import { io } from "socket.io-client";
 
 function Chat() {
-  const { chatSelect, setChatSelect } = useContext(ChatContext);
+  const { chatSelect, setChatSelect, socket } = useContext(ChatContext);
   const { user, users } = useContext(CurrentUserContext);
   const [showContact, setShowContact] = useState(false);
   const { dark } = useContext(CurrentUserContext);
@@ -32,6 +33,17 @@ function Chat() {
   const [chats, setChats] = useState([]);
   const [userSelect, setUserSelect] = useState({});
   const [message, setMessage] = useState([]);
+  const [receiveMessage, setRecieveMessage] = useState(null);
+  const messageEndRef = useRef();
+
+  let contact;
+  if (user?.follower?.join() && user?.following?.join()) {
+    contact = user.following?.concat(user.follower);
+  } else if (user.follower?.join() && !user.following?.join()) {
+    contact = user.follower;
+  } else if (!user.follower?.join() && user.following?.join()) {
+    contact = user.following;
+  }
 
   const addEmoji = (e) => {
     const sym = e.unified.split("_");
@@ -73,6 +85,12 @@ function Chat() {
       .catch((err) => {
         console.log(err);
       });
+
+    socket.current?.on("receiveMessage", (data) => {
+      if (data.ChatId == chatSelect.id) {
+        setRecieveMessage(data);
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -99,6 +117,7 @@ function Chat() {
           console.log(err);
         });
     }
+    setShowContact(false);
   }, [chatSelect]);
 
   useEffect(() => {
@@ -109,8 +128,11 @@ function Chat() {
         })
         .then((res) => {
           res.data.UserId = cookie.get("userId");
+          res.data.receiverId = userSelect.id;
           setMessage([...message, res.data]);
           setFormValue({ content: "" });
+
+          socket.current.emit("sendMessage", res.data);
         })
         .catch((err) => {
           console.log(err);
@@ -118,11 +140,25 @@ function Chat() {
     }
   }, [formErrors]);
 
+  useEffect(() => {
+    messageEndRef.current?.scrollIntoView();
+  }, [message]);
+
+  useEffect(() => {
+    if (receiveMessage != null) {
+      setMessage([...message, receiveMessage]);
+    }
+  }, [receiveMessage]);
+
   return (
     <div className=" flex flex-col h-screen">
       <NavBar />
-      <div className=" flex h-full p-5 overflow-hidden bg-slate-100 dark:bg-slate-900 ">
-        <div className=" w-2/6 h-full flex flex-col px-5 pb-3">
+      <div className=" flex h-full p-5 justify-center overflow-hidden bg-slate-100 dark:bg-slate-900 ">
+        <div
+          className={`${
+            Object?.keys(chatSelect).length != 0 ? " hidden lg:flex" : "flex"
+          } w-full sm:w-4/6 lg:w-5/12 xl:w-2/5 h-full  flex-col px-5 pb-3`}
+        >
           <h1 className=" text-2xl font-semibold text-slate-800 dark:text-slate-200">
             Chats
           </h1>
@@ -161,24 +197,40 @@ function Chat() {
             </button>
           </form>
           <div className=" h-full py-1 flex flex-col gap-3 overflow-y-scroll mt-5">
-            {!showContact
-              ? chats.map((item) => {
-                  return <CartChat key={item.id} chat={item} />;
-                })
-              : user?.follower?.map((id) => {
-                  return <CartContact key={id} id={id} users={users} />;
-                })}
+            {
+              !showContact
+                ? chats.map((item) => {
+                    return <CartChat key={item.id} chat={item} />;
+                  })
+                : contact?.map((id, key) => {
+                    return <CartContact key={key} id={id} />;
+                  })
+              // <div>
+              //   {user?.following?.map((id) => {
+              //     return <CartContact key={id} />;
+              //   })}
+              //   {user?.follower?.map((id) => {
+              //     return <CartChat key={id} />;
+              //   })}
+              // </div>
+            }
           </div>
         </div>
 
-        {Object.keys(chatSelect).length == 0 ? (
-          <div className="bg-white rounded-xl dark:bg-slate-700 w-full flex justify-center items-center text-2xl dark:text-white ">
+        {Object?.keys(chatSelect).length == 0 ? (
+          <div className="bg-white hidden rounded-xl dark:bg-slate-700 w-full lg:flex justify-center items-center text-2xl dark:text-white ">
             Selectionnez Une Discution
           </div>
         ) : (
           <div className=" bg-white rounded-xl dark:bg-slate-700 w-full flex flex-col overflow-hidden">
             <div className="flex justify-between px-5 py-3 shadow dark:shadow-slate-400 items-center">
               <div className=" flex items-center gap-3">
+                <div
+                  className=" h-4 w-4 cursor-pointer dark:text-white lg:hidden text-xl"
+                  onClick={(e) => setChatSelect({})}
+                >
+                  <BsArrowLeft />
+                </div>
                 <div className=" h-12  aspect-square rounded-full bg-slate-400"></div>
                 <h2 className=" font-bold capitalize text-sm dark:text-white">
                   {userSelect?.firstName} {userSelect?.lastName?.split(" ")[0]}
@@ -192,6 +244,7 @@ function Chat() {
               {message.map((item) => {
                 return <Message key={item.id} message={item} />;
               })}
+              <div ref={messageEndRef}></div>
             </div>
 
             <form

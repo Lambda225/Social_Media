@@ -43,20 +43,23 @@ function NavBar() {
   }, []);
 
   return (
-    <nav className="flex justify-between relative py-5 px-10 shadow-lg bg-white dark:bg-slate-800">
+    <nav className=" sticky top-0 flex justify-between z-30 py-5 px-10 shadow-lg bg-white dark:bg-slate-800">
       <div className="flex items-center">
         <h1 className=" text-xl font-bold dark:text-white">
           <Link href="/">Social Media</Link>
         </h1>
         {pathName !== "/chat" && (
-          <form className=" flex items-center ml-3 p-2 rounded-full bg-slate-100 dark:bg-slate-900">
-            <button className=" text-lg text-slate-600 mr-3">
+          <form
+            onSubmit={(e) => e.preventDefault()}
+            className=" flex items-center ml-3 p-2 rounded-full bg-slate-100 dark:bg-slate-900"
+          >
+            <button className=" text-lg text-slate-600 sm:mr-3">
               <FiSearch />
             </button>
             <input
               type="text"
               placeholder="Rechercher"
-              className=" focus:outline-none text-slate-500 bg-transparent"
+              className=" hidden sm:inline-block focus:outline-none text-slate-500 bg-transparent"
               onChange={(e) => {
                 setInputValue(e.target.value);
               }}
@@ -125,12 +128,12 @@ function NavBar() {
           onClick={(e) => {
             setMenu(!menu);
           }}
-          className=" h-9 w-9 flex justify-center cursor-pointer items-center bg-slate-200 dark:bg-slate-700 rounded-full"
+          className=" overflow-hidden h-9 w-9 flex justify-center cursor-pointer items-center bg-slate-200 dark:bg-slate-700 rounded-full"
         >
           {!user.picturePath ? (
             <FaUser className="text-sm text-slate-600 dark:text-slate-400" />
           ) : (
-            <img src={user?.picturePath} alt="user" />
+            <img src={`http://localhost:3001/${user.picturePath}`} alt="user" />
           )}
         </div>
         <div
@@ -143,12 +146,15 @@ function NavBar() {
               onClick={(e) => {
                 setMenu(!menu);
               }}
-              className=" h-9 w-9 flex justify-center items-center bg-slate-200 dark:bg-slate-700 rounded-full"
+              className=" overflow-hidden h-9 w-9 flex justify-center items-center bg-slate-200 dark:bg-slate-700 rounded-full"
             >
               {!user.picturePath ? (
                 <FaUser className="text-sm text-slate-600 dark:text-slate-400" />
               ) : (
-                <img src={user?.picturePath} alt="user" />
+                <img
+                  src={`http://localhost:3001/${user.picturePath}`}
+                  alt="user"
+                />
               )}
             </div>
             <h3 className=" text-xs font-bold dark:text-white  capitalize mt-2">
